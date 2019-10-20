@@ -1,0 +1,2 @@
+# Fires Cron Jobs for Laravel framework
+* * * * * . /opt/elasticbeanstalk/support/envvars && /usr/bin/php /var/www/html/artisan schedule:run >> /dev/null 2>&1
