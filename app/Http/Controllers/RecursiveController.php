@@ -266,7 +266,7 @@ class RecursiveController extends Controller
             ReservationHelper::cancelReservation($reservation);
         }
 
-        $recursive->status = Recursive::RECURSIVESTATUS_STOP;
+        $recursive->status = Recursive::RECURSIVESTATUS_STOPPED;
         $recursive->save();
 
         $target_url = redirect()->back()->getTargetUrl();
