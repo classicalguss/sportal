@@ -162,8 +162,8 @@ class RecursiveController extends Controller
             $reservation_availabilities = $reservation->ids != null ? VenueAvailability::whereIn('id', $ids)->get() : null;
             if($reservation_availabilities == null){
                 //create availabilities
-                $venue = Venue::find($venue_availabilities[0]->venue_id);
                 foreach($venue_availabilities AS $availability){
+                    $venue = $availability->venue_id;
                     $time = (object) [
                         'start' => $availability->time_start(),
                         'finish' => $availability->time_finish(),
