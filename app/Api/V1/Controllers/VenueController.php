@@ -56,65 +56,72 @@ class VenueController extends BaseController
             $count = 50;
         }
 
-        $availabilities = DB::table('venue_availabilities')
-            ->leftJoin('venues', 'venue_availabilities.venue_id', '=', 'venues.id')
-            ->leftJoin('venue_types', 'venue_availabilities.venue_id', '=', 'venue_types.venue_id')
-            ->select('venue_availabilities.venue_id');
+        $availabilities = DB::table('venues')
+            ->join('venue_types', 'venue_availabilities.venue_id', '=', 'venue_types.venue_id')
+            ->select('venues.id')->distinct();
+
+        $venues = Venue::query()
+            ->join('venue_types', 'venue_types.venue_id', '=','venues.id')
+            ->join('venue_availabilities', 'venue_availabilities.venue_id', '=', 'venues.id')
+            ->select('venues.id')->distinct('venues.id');
 
         if($request->has('time_from') || $request->has('date')){
-            $availabilities->where('venue_availabilities.status', VenueAvailability::AVAILABILITYSTATUS_AVAILABLE);
+            $venues->where('venue_availabilities.status', VenueAvailability::AVAILABILITYSTATUS_AVAILABLE);
         }
 
         if($request->has('time_from')) {
-            $availabilities->where('venue_availabilities.time_start', '>=', $request->input('time_from'));
+            $venues->where('venue_availabilities.time_start', '>=', $request->input('time_from'));
             if($request->has('time_to')) {
-                $availabilities->where('venue_availabilities.time_finish', '>=', $request->input('time_from'));
-                $availabilities->where('venue_availabilities.time_finish', '<=', $request->input('time_to'));
+                $venues->where('venue_availabilities.time_finish', '>=', $request->input('time_from'));
+                $venues->where('venue_availabilities.time_finish', '<=', $request->input('time_to'));
             }
         }
 
         if($request->has('date')) {
-            $availabilities->where('venue_availabilities.date', '=', $request->input('date'));
+            $venues->where('venue_availabilities.date', '=', $request->input('date'));
         } else {
-            $availabilities->where('venue_availabilities.date', '>=', Carbon::now());
+            $venues->where('venue_availabilities.date', '>=', Carbon::now());
         }
 
         if($request->has('rid')) {
             $region_id = RegionIdHash::private($request->input('rid'));
-            $availabilities->where('venues.region_id', '=', $region_id);
+            $venues->where('region_id', $region_id);
+//            $availabilities->where('venues.region_id', '=', $region_id);
         }
 
         if($request->has('cid')) {
             $city_id = CityIdHash::private($request->input('cid'));
-            $availabilities->where('venues.city_id', '=', $city_id);
+            $venues->where('city_id', $city_id);
+//            $availabilities->where('venues.city_id', '=', $city_id);
         }
 
         if($request->has('vtid')) {
             $type_id = TypeIdHash::private($request->input('vtid'));
-            $availabilities->where('venue_types.type_id', '=', $type_id);
+            $venues->where('venue_types.type_id', '=', $type_id);
         }
 
         if($request->has('indoor')) {
-            $availabilities->where('venues.indoor', '=', $request->input('indoor'));
+            $venues->where('indoor', $request->input('indoor'));
         }
 
         if($request->has('name')) {
             $name = $request->input('name');
             $name_like = "%$name%";
-            $availabilities->where('venues.name_ar', 'like', $name_like)->orWhere('venues.name_en', 'like', $name_like);
+            $venues->where('name_ar', 'like', $name_like)->orWhere('name_en', 'like', $name_like);
         }
 
         //Get Venues not Availabilities as requested by Waleed Qaffaf
-        $venue_availabilities = $availabilities->get();
-        $venues_list = [];
-        foreach($venue_availabilities AS $venue_availability){
-            if(!isset($venues_list[$venue_availability->venue_id])){
-                $venues_list[$venue_availability->venue_id] = $venue_availability->venue_id;
-            }
+        $venues = $venues->get();
+        $ids = [];
+        foreach ($venues as $venue) {
+            $ids[] = $venue->id;
         }
-        $query = Venue::whereIn('id', $venues_list);
-
-        $venues = $query->paginate($count);
+        $venues = Venue::leftJoin('venue_venues', 'venues.id', '=', 'venue_venues.parent_id')
+            ->select(['venues.*'])
+            ->distinct()
+            ->whereIn('venues.id', $ids)
+            ->orWhereIn('venue_venues.child_id', $ids)->paginate($count);
+//        dd($venues);
         return $this->response->paginator($venues, new VenueTransformer($return_data))->setMeta($this->metaData());
     }
 

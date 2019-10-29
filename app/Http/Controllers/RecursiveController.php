@@ -20,6 +20,8 @@ use App\Venue;
 use App\VenueAvailability;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\VenueVenues;
 
 class RecursiveController extends Controller
 {
@@ -136,6 +138,18 @@ class RecursiveController extends Controller
         $venue_availability_ids = implode(',', VenueAvailabilityHelper::getVenueAvailabilityIdsFromPublic($ids));
         $venue_id = VenueIdHash::private($request->input('venue_id'));
         $venue = Venue::find($venue_id);
+        if ($venue->kind == Venue::VENUEKIND_MULTIPLE) {
+            $childVenues = VenueVenues::where('parent_id', $venue->id)->get();
+            $childVenueIds = [];
+            foreach ($childVenues as $childVenue) {
+                $childVenueIds[] = $childVenue->child_id;
+            }
+            $allVenues = Venue::whereIn('id', $childVenueIds)->get();
+        }
+        else {
+            $allVenues = [$venue];
+        }
+
         $recursive = Recursive::create([
             'customer_id' => $customer->id,
             'venue_id' => $venue_id,
@@ -163,13 +177,16 @@ class RecursiveController extends Controller
             if($reservation_availabilities == null){
                 //create availabilities
                 foreach($venue_availabilities AS $availability){
-                    $venue = $availability->venue_id;
                     $time = (object) [
                         'start' => $availability->time_start(),
                         'finish' => $availability->time_finish(),
                         'duration' => $availability->duration()
                     ];
-                    $reservation_availabilities[] = VenueAvailabilityHelper::createAvailability($venue, $date, $time);
+                    $venueTemp = new Venue();
+                    $venueTemp->id = $availability->venue_id;
+                    $venueTemp->price = $availability->price;
+                    $venueTemp->facility_id = $availability->facility_id;
+                    $reservation_availabilities[] = VenueAvailabilityHelper::createAvailability($venueTemp, $date, $time);
                 }
             }
 
