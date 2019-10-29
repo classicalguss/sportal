@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Admin;
 use App\Facility;
 use App\Helpers\SmsHelper;
 use App\Reservation;
+use App\Role;
 use App\User;
 use App\Venue;
 use Carbon\Carbon;
@@ -50,7 +52,7 @@ class DashboardController extends Controller
             foreach (Auth::user()->facilities() AS $facility) {
                 $facility_ids[] = $facility->id;
             }
-            $reservations = Reservation::selectRaw('venue_id, name_en, sum(TIME_TO_SEC(duration)) as duration')
+            $reservations = Reservation::selectRaw('venue_id, name_en, name_ar, sum(TIME_TO_SEC(duration)) as duration')
                 ->whereIn('reservations.facility_id', $facility_ids)
                 ->join('venues', 'reservations.venue_id', '=', 'venues.id')
                 ->groupBy('venue_id')
@@ -72,7 +74,16 @@ class DashboardController extends Controller
                 }
                 $daysReservationsCount[] = ['date'=> $dateTemp, 'reservations' => $value];
             }
-            return view('dashboard.facility-manager', compact('reservations', 'daysReservationsCount'));
+
+            $todaysReservations = Reservation::whereDate('start_date_time', Carbon::today())
+                ->whereIn('facility_id', $facility_ids)
+                ->get();
+
+            $tomorrowsReservations = Reservation::whereDate('start_date_time', Carbon::tomorrow())
+                ->whereIn('facility_id', $facility_ids)
+                ->get();
+            $superAdmins = Admin::role(Role::ROLE_FACILITY_MANAGER)->first();
+            return view('dashboard.facility-manager', compact('reservations', 'daysReservationsCount', 'todaysReservations', 'tomorrowsReservations'));
         }
 
         return view('dashboard.index');

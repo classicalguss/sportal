@@ -306,6 +306,8 @@ class ReservationController extends Controller
                 if ($admin->hasRole(Role::ROLE_SUPER_ADMIN)) {
                     $message = ReservationHelper::reservationSms($reservation, $admin->name, 'created');
                     AdminHelper::sendSmsToFacilityManagers('A ' . $message, $reservation->facility_id, SmsLog::SMSTYPE_CREATE_RESERVATION);
+                    AdminHelper::sendSmsToSuperAdmins('A '.$message, SmsLog::SMSTYPE_CREATE_RESERVATION);
+                    SmsHelper::sendSms($customer->phone_number, 'A ' . $message, SmsLog::SMSTYPE_CREATE_RESERVATION);
                 }
             }
         }

@@ -2,7 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Admin;
 use App\Facility;
+use App\Role;
 use App\SmsLog;
 
 class AdminHelper
@@ -19,6 +21,15 @@ class AdminHelper
             if ($facility_manager->phone_number != null) {
                 $response = SmsHelper::sendSms($facility_manager->phone_number, $message, $sms_type);
             }
+        }
+        return true;
+    }
+
+    public static function sendSmsToSuperAdmins($message, $sms_type)
+    {
+        $superAdmins = Admin::role(Role::ROLE_FACILITY_MANAGER)->get();
+        foreach ($superAdmins as $admin) {
+            SmsHelper::sendSms($admin->phone_number, $message, $sms_type);
         }
         return true;
     }

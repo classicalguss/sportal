@@ -2,6 +2,7 @@
 
 namespace App\Api\V1\Controllers;
 
+use App\Admin;
 use App\Api\V1\Requests\ReservationGetRequest;
 use App\Api\V1\Requests\ReservationRequest;
 use App\Api\V1\Transformers\BasicTransformer;
@@ -12,6 +13,7 @@ use App\Hashes\VenueIdHash;
 use App\Helpers\AdminHelper;
 use App\Helpers\CustomerHelper;
 use App\Helpers\ReservationHelper;
+use App\Helpers\SmsHelper;
 use App\Helpers\VenueAvailabilityHelper;
 use App\Reservation;
 use App\ReservationAvailability;
@@ -93,10 +95,12 @@ class ReservationController extends BaseController
             $reservation->save();
         }
 
-        //send SMS to Facility Managers
+        //send SMS to Facility Managers and Super admins
         if (env('SMS_SEND_ENABLE', true)) {
             $message = ReservationHelper::reservationSms($reservation, $user->name, 'created');
             AdminHelper::sendSmsToFacilityManagers('A ' . $message, $reservation->facility_id, SmsLog::SMSTYPE_CREATE_RESERVATION);
+            AdminHelper::sendSmsToSuperAdmins('A '.$message, SmsLog::SMSTYPE_CREATE_RESERVATION);
+            SmsHelper::sendSms($customer->phone_number, 'A ' . $message, SmsLog::SMSTYPE_CREATE_RESERVATION);
         }
 
         return $this->response->created([], $this->metaData([], 201, 'Reservation Created'));
