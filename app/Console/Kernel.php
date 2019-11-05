@@ -31,9 +31,10 @@ class Kernel extends ConsoleKernel
         });
 
         //Create new Venue availabilities
-        $schedule->command('Reservation:update')->hourly()->when(function(){
-            return env('CRON_UPDATE_RESERVATIONS_ENABLE', true);
-        });
+        $schedule->command('Reservation:update')->everyMinute();
+//        $schedule->command('Reservation:update')->hourly()->when(function(){
+//            return env('CRON_UPDATE_RESERVATIONS_ENABLE', true);
+//        });
     }
 
     /**
