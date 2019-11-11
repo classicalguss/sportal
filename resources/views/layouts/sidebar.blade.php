@@ -11,6 +11,7 @@
         <ul class="sidebar-menu">
             <li class="header">@lang('app.pages')</li>
             <li class="{{ (Request::is('dashboard') ? 'active' : '') }}"><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> <span>@lang('app.dashboard')</span></a></li>
+            <li class="{{ (Request::is('reservations/calendar') ? 'active' : '') }}"><a href="{{ route('reservations.calendar') }}"><i class="fa fa-calendar"></i> <span>@lang('app.calendar')</span></a></li>
             @role('super_admin')
             <li class="{{ (Request::is('facilities') ? 'active' : '') }}"><a href="{{ route('facilities.index') }}"><i class="fa fa-building"></i> <span>@lang('app.facilities')</span></a></li>
             @endrole
@@ -29,7 +30,7 @@
                 </li>
             @endif
             @endrole
-            <li class="{{ (Request::is('reservations') ? 'active' : '') }}"><a href="{{ route('reservations.index') }}"><i class="fa fa-calendar"></i> <span>@lang('app.reservations')</span></a></li>
+            <li class="{{ (Request::is('reservations') ? 'active' : '') }}"><a href="{{ route('reservations.index') }}"><i class="fa fa-table"></i> <span>@lang('app.reservations')</span></a></li>
             <li class="{{ (Request::is('recursive') ? 'active' : '') }}"><a href="{{ route('recursive.index') }}"><i class="fa fa-undo"></i> <span>@lang('app.recursive')</span></a></li>
             <li class="{{ (Request::is('reservations/list') ? 'active' : '') }}"><a href="{{ route('reservations.list') }}"><i class="fa fa-calendar-check-o"></i> <span>@lang('app.reservation-create')</span></a></li>
             @role('super_admin')

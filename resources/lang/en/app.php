@@ -19,4 +19,5 @@ return [
     'reservation-create' => 'Book Reservation',
     'recursive' => 'Recurring Reservations',
     'sms-logs' => 'Sms Logs',
+    'calendar' => 'Calendar',
 ];

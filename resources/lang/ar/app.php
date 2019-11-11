@@ -19,4 +19,5 @@ return [
     'reservation-create' => 'احجز موعد',
     'recursive' => 'حجوزات مكررة',
     'sms-logs' => 'سجل الرسائل',
+    'calendar' => 'الرزنامة'
 ];

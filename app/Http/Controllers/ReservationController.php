@@ -28,6 +28,7 @@ use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class ReservationController extends Controller
 {
@@ -198,6 +199,37 @@ class ReservationController extends Controller
         }
 
         return view('reservation.list-table', compact('availabilities', 'vid', 'venues', 'page_title', 'date_default', 'interval_enable', 'interval_times'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @param $ids
+     * @param ReservationCreateRequest $request
+     * @return \Illuminate\Http\Response
+     */
+    public function calendar()
+    {
+        $facilities = Auth::user()->facilities();
+        $facility_ids = [];
+        if(Auth::user()->hasRole('facility_manager')) {
+            foreach ($facilities AS $facility) {
+                $facility_ids[] = $facility->id;
+            }
+        }
+        $venues = Venue::whereIn('facility_id', $facility_ids)->limit(5)->get();
+        $colorsArray = ['red','green','blue','maroon','olive','navy','black','purple'];
+        $i = 0;
+        $colorsKeyArray = [];
+        foreach ($venues as $venue) {
+            $colorsKeyArray[$venue->id] = $colorsArray[$i % 8];
+            $i++;
+        }
+
+        $page_title = __('app.calendar');
+        $reservations = Reservation::whereBetween('start_date_time', [Carbon::now(), Carbon::now()->addWeek(2)])
+            ->whereIn('facility_id', $facility_ids)->get();
+        return view('reservation.calendar', compact('page_title', 'reservations', 'colorsKeyArray','venues'));
     }
 
     /**

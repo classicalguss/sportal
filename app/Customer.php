@@ -24,4 +24,9 @@ class Customer extends Model
     {
         return $this->belongsTo('App\User')->first();
     }
+
+    public function firstName() {
+        $nameArray = explode(' ', $this->name);
+        return $nameArray[0];
+    }
 }

@@ -66,6 +66,7 @@ Route::post('venues/multi', 'VenueController@storeMulti')->name('venues.storeMul
 
 //Reservations
 Route::get('reservations/list', 'ReservationController@list')->name('reservations.list')->middleware('auth:web');
+Route::get('reservations/calendar', 'ReservationController@calendar')->name('reservations.calendar')->middleware('auth:web');
 Route::get('reservations', 'ReservationController@index')->name('reservations.index')->middleware('auth:web');
 Route::get('reservations/create/{availability}', 'ReservationController@create')->name('reservations.create')->middleware('auth:web');
 Route::post('reservations', 'ReservationController@store')->name('reservations.store')->middleware('auth:web');
