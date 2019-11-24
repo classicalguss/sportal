@@ -18,6 +18,8 @@ use App\Http\Requests\Reservation\ReservationDestroyRequest;
 use App\Http\Requests\Reservation\ReservationListRequest;
 use App\Http\Requests\Reservation\ReservationShowRequest;
 use App\Http\Requests\Reservation\ReservationStoreRequest;
+use App\Http\Requests\Reservation\ReservationCalendarStoreRequest;
+use App\Http\Requests\Reservation\ReservationCalendarUpdateRequest;
 use App\Reservation;
 use App\ReservationAvailability;
 use App\Role;
@@ -26,9 +28,13 @@ use App\Venue;
 use App\VenueAvailability;
 use Auth;
 use Carbon\Carbon;
+use Carbon\CarbonInterval;
+use Dingo\Api\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use App\VenueVenues;
+use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
@@ -45,58 +51,58 @@ class ReservationController extends Controller
 
         $count = $request->has('count') ? $request->input('count') : env('RESERVATION_DEFAULT_PAGINATION', 10);
 
-        if($request->has('facility') && $request->filled('facility')){
+        if ($request->has('facility') && $request->filled('facility')) {
             $facility = $request->input('facility');
             $facility_like = "%$facility%";
-            $query->whereHas('facilities', function($query) use ($facility_like) {
+            $query->whereHas('facilities', function ($query) use ($facility_like) {
                 $query->where('name_en', 'like', $facility_like);
                 $query->orWhere('name_ar', 'like', $facility_like);
             });
         }
 
-        if($request->has('venue') && $request->filled('venue')){
+        if ($request->has('venue') && $request->filled('venue')) {
             $venue = $request->input('venue');
             $venue_like = "%$venue%";
-            $query->whereHas('venues', function($query) use ($venue_like) {
+            $query->whereHas('venues', function ($query) use ($venue_like) {
                 $query->where('name_en', 'like', $venue_like);
                 $query->orWhere('name_ar', 'like', $venue_like);
             });
         }
 
-        if($request->has('user') && $request->filled('user')){
+        if ($request->has('user') && $request->filled('user')) {
             $user = $request->input('user');
             $user_like = "%$user%";
-            $query->whereHas('customers', function($query) use ($user_like) {
+            $query->whereHas('customers', function ($query) use ($user_like) {
                 $query->where('name', 'like', $user_like);
             });
         }
 
-        if($request->has('phone_number') && $request->filled('phone_number')){
+        if ($request->has('phone_number') && $request->filled('phone_number')) {
             $phone_number = $request->input('phone_number');
             $phone_number_like = "%$phone_number%";
-            $query->whereHas('customers', function($query) use ($phone_number_like) {
+            $query->whereHas('customers', function ($query) use ($phone_number_like) {
                 $query->where('phone_number', 'like', $phone_number_like);
             });
         }
 
         $reserver = $request->input('reserver');
-        if($request->filled('reserver') && $reserver != '0'){
+        if ($request->filled('reserver') && $reserver != '0') {
             $query->where('reserver', $request->input('reserver'));
         }
 
-        if($request->has('date') && $request->filled('date')){
+        if ($request->has('date') && $request->filled('date')) {
             $date = $request->input('date');
-            $query->where('start_date_time', 'LIKE', $date."%");
+            $query->where('start_date_time', 'LIKE', $date . "%");
         }
 
         $facility_ids = [];
-        if(Auth::user()->hasRole('facility_manager')) {
+        if (Auth::user()->hasRole('facility_manager')) {
             foreach (Auth::user()->facilities() AS $facility) {
                 $facility_ids[] = $facility->id;
             }
         }
 
-        if(COUNT($facility_ids) > 0){
+        if (COUNT($facility_ids) > 0) {
             $query->whereIn('facility_id', $facility_ids);
         }
 
@@ -105,7 +111,7 @@ class ReservationController extends Controller
         $venues_query = Venue::query();
         $facilities_query = Facility::query();
 
-        if(COUNT($facility_ids) > 0){
+        if (COUNT($facility_ids) > 0) {
             $facilities_query->whereIn('id', $facility_ids);
             $venues_query->whereIn('facility_id', $facility_ids);
         }
@@ -129,20 +135,20 @@ class ReservationController extends Controller
 
         $venues_query = Venue::query();
 
-        if(Auth::user()->hasRole('facility_manager')) {
+        if (Auth::user()->hasRole('facility_manager')) {
             $facility_ids = Auth::user()->facilities()->pluck('id');
             $venues_query->whereIn('facility_id', $facility_ids);
         }
 
         $venues = $venues_query->get();
-        if(COUNT($venues) == 0){
+        if (COUNT($venues) == 0) {
             abort(404);
         }
         $venue_id = $venues[0]->id;
         $vid = $venues[0]->publicId();
 
         //Date
-        if($request->filled('date')){
+        if ($request->filled('date')) {
             $date_default = $request->input('date');
         } else {
             $date_default = Carbon::now('asia/amman')->toDateString();
@@ -151,13 +157,13 @@ class ReservationController extends Controller
 
         //Venue
         $venue = $request->input('venue');
-        if($request->filled('venue') && $venue != '0'){
+        if ($request->filled('venue') && $venue != '0') {
             $venue_id = VenueIdHash::private($request->input('venue'));
             $vid = $venue;
 
             //Check if this venue is virtual
             $venue = Venue::find($venue_id);
-            if($venue->kind == Venue::VENUEKIND_MULTIPLE){
+            if ($venue->kind == Venue::VENUEKIND_MULTIPLE) {
                 $is_virtual = true;
                 $venue_ids = $venue->venues()->get()->pluck('id');
             }
@@ -165,7 +171,7 @@ class ReservationController extends Controller
 
         $virtual_availabilities = [];
         //concatenate availabilities
-        if($is_virtual == true){
+        if ($is_virtual == true) {
             $virtual_availabilities = VenueAvailabilityHelper::getVirtualAvailabilities($availabilities_query, $venue_ids);
             $availabilities_query = $availabilities_query->whereIn('id', array_keys($virtual_availabilities));
         } else {
@@ -181,7 +187,7 @@ class ReservationController extends Controller
         $interval_enable = COUNT($interval_times) == 0 ? false : $interval_enable;
 
         //Interval
-        if($interval_enable){
+        if ($interval_enable) {
             $interval_time = $request->input('interval_time', $interval_times[0]);
             $page = $request->input('page', 1);
             $path = $request->url();
@@ -194,7 +200,7 @@ class ReservationController extends Controller
             $availabilities = $availabilities_query->paginate($count);
         }
 
-        if($is_virtual){
+        if ($is_virtual) {
             $availabilities = VenueAvailabilityHelper::updateAvailabilitiesVirtualIds($availabilities, $virtual_availabilities, $venue_id);
         }
 
@@ -208,28 +214,36 @@ class ReservationController extends Controller
      * @param ReservationCreateRequest $request
      * @return \Illuminate\Http\Response
      */
-    public function calendar()
+    public function calendar(Request $request)
     {
-        $facilities = Auth::user()->facilities();
-        $facility_ids = [];
-        if(Auth::user()->hasRole('facility_manager')) {
-            foreach ($facilities AS $facility) {
-                $facility_ids[] = $facility->id;
-            }
+        if (Auth::user()->hasRole('facility_manager')) {
+            $facilities = Auth::user()->facilities();
+        } else {
+            $facilities = Facility::all();
         }
-        $venues = Venue::whereIn('facility_id', $facility_ids)->limit(5)->get();
-        $colorsArray = ['red','green','blue','maroon','olive','navy','black','purple'];
+
+        foreach ($facilities AS $facility) {
+            $facility_ids[] = $facility->id;
+        }
+
+        if (in_array($request->get('facility_id'), $facility_ids)) {
+            $facility_id = $request->get('facility_id');
+        } else {
+            $facility_id = $facility_ids[0];
+        }
+        $venues = Venue::where('facility_id', '=', $facility_id)->get();
+        $colorsArray = ['red', 'green', 'blue', 'maroon', 'olive', 'gray', 'black', 'purple', 'orange', 'navy'];
         $i = 0;
         $colorsKeyArray = [];
         foreach ($venues as $venue) {
-            $colorsKeyArray[$venue->id] = $colorsArray[$i % 8];
+            $colorsKeyArray[$venue->id] = $colorsArray[$i % 10];
             $i++;
         }
 
         $page_title = __('app.calendar');
         $reservations = Reservation::whereBetween('start_date_time', [Carbon::now(), Carbon::now()->addWeek(2)])
-            ->whereIn('facility_id', $facility_ids)->get();
-        return view('reservation.calendar', compact('page_title', 'reservations', 'colorsKeyArray','venues'));
+            ->where('facility_id', '=', $facility_id)->get();
+        return view('reservation.calendar', compact('page_title', 'reservations', 'colorsKeyArray', 'venues', 'facilities', 'facility_id'));
     }
 
     /**
@@ -248,7 +262,7 @@ class ReservationController extends Controller
 
         $venue_availability_ids = [];
         $vaids = explode(',', $ids);
-        foreach($vaids AS $vaid){
+        foreach ($vaids AS $vaid) {
             $venue_availability_ids[] = VenueAvailabilityIdHash::private($vaid);
         }
 
@@ -259,6 +273,139 @@ class ReservationController extends Controller
         $venue_availability = VenueAvailabilityHelper::combineVenueAvailabilities($venue_availabilities, $venue);
 
         return view('reservation.create', compact('ids', 'vid', 'venue_availability', 'images', 'venue_types', 'venue', 'page_title'));
+    }
+
+    public function calendarUpdate(ReservationCalendarUpdateRequest $request) {
+        $reservation = Reservation::findOrFail($request->input('reservation_id'));
+        $time_start = $request->input('time_start');
+        $time_finish = $request->input('time_finish');
+        $duration = $request->input('duration');
+        if ($time_start != null && $time_finish != null) {
+            $start_date_time = Carbon::createFromFormat('d-m-Y H:i', $time_start);
+            $finish_date_time = Carbon::createFromFormat('d-m-Y H:i', $time_finish);
+            $reservation->start_date_time = $start_date_time;
+            $reservation->finish_date_time = $finish_date_time;
+            $reservation->duration = $duration;
+            $reservation->save();
+
+            $reservedAvailabilities = ReservationAvailability::where('reserve_id', request('reservation_id'))
+                ->pluck('available_id')->all();
+
+            VenueAvailability::whereIn('id', $reservedAvailabilities)->update([
+                'time_start' => $start_date_time->format('H:i'),
+                'time_finish' => $finish_date_time->format('H:i'),
+                'duration' => $duration
+            ]);
+        }
+
+        return 'ok';
+    }
+
+    public function calendarStore(ReservationCalendarStoreRequest $request) {
+        $time_start = $request->input('time_start');
+        $time_finish = $request->input('time_finish');
+        $type_id = TypeIdHash::private($request->input('type'));
+        $vid = $request->input('vid');
+        $venue_id = VenueIdHash::private($vid);
+        $venue = Venue::findOrFail($venue_id);
+        $duration = $request->input('duration');
+
+        if ($venue->kind == Venue::VENUEKIND_MULTIPLE) {
+            $childVenues = VenueVenues::where('parent_id', $venue->id)->get();
+            $childVenueIds = [];
+            foreach ($childVenues as $childVenue) {
+                $childVenueIds[] = $childVenue->child_id;
+            }
+            $childVenues = Venue::whereIn('id', $childVenueIds)->get();
+        }
+        else {
+            $childVenues = [$venue];
+        }
+
+        $start_date_time = Carbon::createFromFormat('d-m-Y H:i', $time_start);
+        $finish_date_time = Carbon::createFromFormat('d-m-Y H:i', $time_finish);
+        $time = (object)[
+            'start' => $start_date_time->format('H:i'),
+            'finish' => $finish_date_time->format('H:i'),
+            'duration' => $duration
+        ];
+        $date = $start_date_time->toDate();
+        foreach ($childVenues as $childVenue) {
+            $venue_availabilities[] = VenueAvailabilityHelper::createAvailability($childVenue, $date, $time);
+        }
+        $reservation = $this->reserve($request, $type_id, $venue_availabilities, $start_date_time, $finish_date_time);
+        return response()->json(['message' => 'done', 'reservation_id' => $reservation->id], \Illuminate\Http\Response::HTTP_OK);
+    }
+
+    private function reserve($request, $type_id, $venue_availabilities, $start_date_time, $finish_date_time) {
+        $vid = $request->input('vid');
+        $duration = $request->input('duration');
+        $venue_id = VenueIdHash::private($vid);
+        $venue = Venue::findOrFail($venue_id);
+        $reservation_type_id = $request->input('reservation_type');
+        $notes = $request->input('notes');
+        $price = $request->input('price');
+
+        $admin_id = Auth::user()->id;
+        $admin = Admin::find($admin_id);
+
+        $reserver = Reservation::RESERVERTYPE_FACILITY_MANGER;
+        if ($admin->hasRole('super_admin')) {
+            $reserver = Reservation::RESERVERTYPE_SUPER_ADMIN;
+        }
+
+        //Create new reservation
+        $customer = CustomerHelper::getOrCreateCustomer('962' . $request->input('phone_number'), [
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'address' => $request->input('address')
+        ]);
+
+        $reservation = Reservation::create([
+            'reserver' => $reserver,
+            'reserver_id' => $admin_id,
+            'customer_id' => $customer->id,
+            'reservation_type_id' => $reservation_type_id,
+            'facility_id' => $venue->facility_id,
+            'venue_id' => $venue_id,
+            'type_id' => $type_id,
+            'start_date_time' => $start_date_time,
+            'finish_date_time' => $finish_date_time,
+            'duration' => $duration,
+            'notes' => $notes,
+            'price' => $price
+        ]);
+
+        if($reservation->wasRecentlyCreated) {
+            foreach ($venue_availabilities AS $venue_availability) {
+                ReservationAvailability::create([
+                    'reserve_id' => $reservation->id,
+                    'available_id' => $venue_availability->id
+                ]);
+
+                //Update availability to reserved
+                $venue_availability->status = VenueAvailability::AVAILABILITYSTATUS_RESERVED;
+                $venue_availability->update();
+            }
+
+            //Change status to pending
+            if (env('RESERVATION_AUTO_APPROVE', true)) {
+                $reservation->status = Reservation::RESERVATIONSTATUS_APPROVED;
+                $reservation->update();
+            }
+
+            //send SMS to Facility Managers
+            if (env('SMS_SEND_ENABLE', true) && Auth::check()) {
+                if ($admin->hasRole(Role::ROLE_SUPER_ADMIN)) {
+                    $message = ReservationHelper::reservationSms($reservation, $admin->name, 'created');
+                    AdminHelper::sendSmsToFacilityManagers('A ' . $message, $reservation->facility_id, SmsLog::SMSTYPE_CREATE_RESERVATION);
+                    AdminHelper::sendSmsToSuperAdmins('A ' . $message, SmsLog::SMSTYPE_CREATE_RESERVATION);
+                    SmsHelper::sendSms($customer->phone_number, 'A ' . $message, SmsLog::SMSTYPE_CREATE_RESERVATION);
+                }
+            }
+        }
+
+        return $reservation;
     }
 
     /**
@@ -315,7 +462,7 @@ class ReservationController extends Controller
             'price' => $price
         ]);
 
-        if($reservation->wasRecentlyCreated) {
+        if ($reservation->wasRecentlyCreated) {
             foreach ($venue_availabilities AS $venue_availability) {
                 ReservationAvailability::create([
                     'reserve_id' => $reservation->id,
@@ -338,7 +485,7 @@ class ReservationController extends Controller
                 if ($admin->hasRole(Role::ROLE_SUPER_ADMIN)) {
                     $message = ReservationHelper::reservationSms($reservation, $admin->name, 'created');
                     AdminHelper::sendSmsToFacilityManagers('A ' . $message, $reservation->facility_id, SmsLog::SMSTYPE_CREATE_RESERVATION);
-                    AdminHelper::sendSmsToSuperAdmins('A '.$message, SmsLog::SMSTYPE_CREATE_RESERVATION);
+                    AdminHelper::sendSmsToSuperAdmins('A ' . $message, SmsLog::SMSTYPE_CREATE_RESERVATION);
                     SmsHelper::sendSms($customer->phone_number, 'A ' . $message, SmsLog::SMSTYPE_CREATE_RESERVATION);
                 }
             }
@@ -359,11 +506,11 @@ class ReservationController extends Controller
         $page_title = __('reservation.status');
         $reservation_id = ReservationIdHash::private($id);
         $reservation = Reservation::where('id', $reservation_id)->first();
-        if($reservation == null){
+        if ($reservation == null) {
             return redirect()->back()->with('message', __('reservation.not-found'));
         }
         $venue_availabilities = $reservation->venueAvailabilities()->get();
-        if(COUNT($venue_availabilities) == 0){
+        if (COUNT($venue_availabilities) == 0) {
             return redirect()->back()->with('message', __('availability.not-found'));
         }
         $venue_availability = $venue_availabilities[0];
@@ -375,7 +522,7 @@ class ReservationController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param  int $id
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
@@ -386,8 +533,8 @@ class ReservationController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  \Illuminate\Http\Request $request
+     * @param  int $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
@@ -406,7 +553,7 @@ class ReservationController extends Controller
     {
         $reservation_id = ReservationIdHash::private($id);
         $reservation = Reservation::where('id', $reservation_id)->first();
-        if($reservation == null){
+        if ($reservation == null) {
             return redirect()->back()->with('message', __('reservation.not-found'));
         }
 
@@ -434,7 +581,7 @@ class ReservationController extends Controller
     {
         $reservation_id = ReservationIdHash::private($id);
         $reservation = Reservation::where('id', $reservation_id)->first();
-        if($reservation == null){
+        if ($reservation == null) {
             return redirect()->back()->with('message', __('reservation.not-found'));
         }
 

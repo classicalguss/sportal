@@ -86,13 +86,21 @@ class Venue extends Model
     public function facilityName()
     {
         $facility = $this->facility();
-        if($facility == null){
+        if ($facility == null) {
             return self::DEFAULT_NAME;
         }
-        if (App::getLocale() == 'ar'){
+        if (App::getLocale() == 'ar') {
             return $facility->name_ar;
         }
         return $facility->name_en;
+    }
+
+    public function shortestDuration()
+    {
+        if ($this->interval_times != null) {
+            return json_decode($this->interval_times, true)['minutes'][0];
+        }
+        return 30;
     }
 
     /**
@@ -117,10 +125,10 @@ class Venue extends Model
     public function typeName()
     {
         $type = $this->type();
-        if($type == null){
+        if ($type == null) {
             return self::DEFAULT_NAME;
         }
-        if (App::getLocale() == 'ar'){
+        if (App::getLocale() == 'ar') {
             return $type->name_ar;
         }
         return $type->name_en;
@@ -130,8 +138,8 @@ class Venue extends Model
     {
         $venue_types = $this->types()->get();
         $types = '';
-        foreach($venue_types AS $venue_type){
-            $types .= '<span class="label" style="background-color: '.$venue_type->color.'">' . $venue_type->name() . '</span> ';
+        foreach ($venue_types AS $venue_type) {
+            $types .= '<span class="label" style="background-color: ' . $venue_type->color . '">' . $venue_type->name() . '</span> ';
         }
         return $types;
     }
@@ -139,7 +147,7 @@ class Venue extends Model
     public function kindName()
     {
         $venue_kind = $this->kind;
-        return '<span class="label label-'.self::$kindColor[$venue_kind].'">' . self::$kind[$venue_kind] . '</span> ';
+        return '<span class="label label-' . self::$kindColor[$venue_kind] . '">' . self::$kind[$venue_kind] . '</span> ';
     }
 
     /**
@@ -156,10 +164,10 @@ class Venue extends Model
     public function cityName()
     {
         $city = $this->city();
-        if($city == null){
+        if ($city == null) {
             return self::DEFAULT_NAME;
         }
-        if (App::getLocale() == 'ar'){
+        if (App::getLocale() == 'ar') {
             return $city->name_ar;
         }
         return $city->name_en;
@@ -179,10 +187,10 @@ class Venue extends Model
     public function regionName()
     {
         $region = $this->region();
-        if($region == null){
+        if ($region == null) {
             return self::DEFAULT_NAME;
         }
-        if (App::getLocale() == 'ar'){
+        if (App::getLocale() == 'ar') {
             return $region->name_ar;
         }
         return $region->name_en;
@@ -202,10 +210,10 @@ class Venue extends Model
     public function markerName()
     {
         $marker = $this->marker();
-        if($marker == null){
+        if ($marker == null) {
             return self::DEFAULT_NAME;
         }
-        if (App::getLocale() == 'ar'){
+        if (App::getLocale() == 'ar') {
             return $marker->name_ar;
         }
         return $marker->name_en;
@@ -216,7 +224,7 @@ class Venue extends Model
         $avg = ($this->rate_value / $this->rate_total);
         $value_floor = floor($avg);
 
-        return ($avg - $value_floor) >= 0.5 ? ($value_floor+0.5) : $value_floor;
+        return ($avg - $value_floor) >= 0.5 ? ($value_floor + 0.5) : $value_floor;
     }
 
     /**
@@ -250,7 +258,7 @@ class Venue extends Model
     public function name($lang = null)
     {
         $lang = $lang == null ? App::getLocale() : $lang;
-        if ($lang == 'ar'){
+        if ($lang == 'ar') {
             return $this->name_ar;
         }
         return $this->name_en;
@@ -261,7 +269,7 @@ class Venue extends Model
      */
     public function addressName()
     {
-        if (App::getLocale() == 'ar'){
+        if (App::getLocale() == 'ar') {
             return $this->address_ar;
         }
         return $this->address_en;
