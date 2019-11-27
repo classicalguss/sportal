@@ -95,7 +95,7 @@ class Reservation extends Model
      */
     public function venue()
     {
-        return $this->belongsTo('App\Venue')->first();
+        return $this->belongsTo('App\Venue');
     }
 
     /**
@@ -111,7 +111,7 @@ class Reservation extends Model
      */
     public function customer()
     {
-        return $this->belongsTo('App\Customer')->first();
+        return $this->belongsTo('App\Customer');
     }
 
     /**

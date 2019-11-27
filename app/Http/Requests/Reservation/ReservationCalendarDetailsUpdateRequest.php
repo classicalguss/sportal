@@ -10,8 +10,9 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Log;
 
-class ReservationCalendarUpdateRequest extends FormRequest
+class ReservationCalendarDetailsUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -42,9 +43,9 @@ class ReservationCalendarUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            "duration" => 'required_with:time_start',
-            "time_start" => ['required', new ValidTimeRange()],
-            "reservation_id" => ['required']
+            "reservation_id" => ['required'],
+            'phone_number' => 'phone_number_short|size:9',
+
         ];
     }
 

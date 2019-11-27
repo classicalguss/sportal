@@ -21,4 +21,5 @@ return [
     'recursive' => 'Recursive Reservation',
     'confirm-delete' => 'Are you sure you want to cancel this reservation?',
     'confirm-noshow' => 'Are you sure you want to set this reservation as No Show?',
+    'reservation-details' => 'Reservation Details'
 ];

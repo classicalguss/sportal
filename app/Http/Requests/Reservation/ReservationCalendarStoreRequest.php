@@ -30,8 +30,7 @@ class ReservationCalendarStoreRequest extends FormRequest
     {
         return [
             "time_start" => ['required',new ValidTimeRange()],
-            "time_end" => ['required'],
-            "reservation_id" => ['required']
+            "time_finish" => ['required']
         ];
     }
 

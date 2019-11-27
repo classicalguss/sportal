@@ -74,5 +74,6 @@ return [
     'created-at' => 'Created At',
     'venue-kind' => 'Venue Kind',
     'venues' => 'Venues',
-    'notes' => 'Notes'
+    'notes' => 'Notes',
+    'submit' => 'Submit'
 ];

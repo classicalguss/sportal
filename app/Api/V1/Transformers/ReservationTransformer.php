@@ -58,13 +58,13 @@ class ReservationTransformer extends BasicTransformer
                     'time_finish' => $time_finish ?? VenueAvailability::DEFAULT_TIME,
                     'duration' => $reservation->duration ?? VenueAvailability::DEFAULT_TIME,
                     'price' => $reservation->price ?? VenueAvailability::DEFAULT_PRICE,
-                    'venue' => $venue_transformer->transform($reservation->venue() ?? new Venue()),
+                    'venue' => $venue_transformer->transform($reservation->venue ?? new Venue()),
                     'reserved_venue_type' => $type_transformer->transform($reservation->type() ?? new Type())
                 ];
             case self::RETURNDATA_DETAILS:
                 $user_transformer = new UserTransformer(self::RETURNDATA_FULL);
                 return [
-                    'user' => $user_transformer->transform($reservation->customer()->user() ?? new User()),
+                    'user' => $user_transformer->transform($reservation->customer->user() ?? new User()),
                     'created_at' => $reservation->created_at->format('d-m-Y H:i:s'),
                     'update_at' => $reservation->updated_at->format('d-m-Y H:i:s')
                 ];

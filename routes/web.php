@@ -71,6 +71,8 @@ Route::get('reservations', 'ReservationController@index')->name('reservations.in
 Route::get('reservations/create/{availability}', 'ReservationController@create')->name('reservations.create')->middleware('auth:web');
 Route::post('reservationsCalendarStore', 'ReservationController@calendarStore')->name('reservations.calendarStore')->middleware('auth:web');
 Route::post('reservationsCalendarUpdate', 'ReservationController@calendarUpdate')->name('reservations.calendarUpdate')->middleware('auth:web');
+Route::post('reservationsCalendarDetailsUpdate', 'ReservationController@calendarDetailsUpdate')->name('reservations.calendarDetailsUpdate')->middleware('auth:web');
+Route::post('reservationsCalendarDelete', 'ReservationController@calendarDelete')->name('reservations.calendarDelete')->middleware('auth:web');
 Route::post('reservations', 'ReservationController@store')->name('reservations.store')->middleware('auth:web');
 Route::get('reservations/{reservation}', 'ReservationController@show')->name('reservations.show')->middleware('auth:web');
 Route::get('reservations/{reservation}/edit', 'ReservationController@edit')->name('reservations.edit')->middleware('auth:web');

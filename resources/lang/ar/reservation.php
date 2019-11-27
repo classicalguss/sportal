@@ -21,4 +21,5 @@ return [
     'recursive' => 'حجز مكرر',
     'confirm-delete' => 'هل أنت نتأكد من إلغاء الحجز؟',
     'confirm-noshow' => 'هل أنت متأكد من تحديد الحجز بعدم الحضور؟',
+    'reservation-details' => 'بيانات الحجز'
 ];

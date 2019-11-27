@@ -5,6 +5,8 @@ namespace App\Providers;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Validator;
+use DB;
+use File;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +25,14 @@ class AppServiceProvider extends ServiceProvider
         {
             return substr($value, 0, 1) == '7';
         });
+        if(env('APP_DEBUG')) {
+            DB::listen(function($query) {
+                File::append(
+                    storage_path('/logs/query.log'),
+                    $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL
+                );
+            });
+        }
     }
 
     /**

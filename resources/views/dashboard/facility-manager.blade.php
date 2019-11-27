@@ -55,9 +55,9 @@
                         </tr>
                         @forelse($todaysReservations AS $reservation)
                             <tr>
-                                <td>{{ $reservation->customer()->name ?? '' }}</td>
-                                <td>{{ $reservation->customer()->phone_number ?? '' }}</td>
-                                <td>{{ $reservation->venue()->name() }}</td>
+                                <td>{{ $reservation->customer->name ?? '' }}</td>
+                                <td>{{ $reservation->customer->phone_number ?? '' }}</td>
+                                <td>{{ $reservation->venue->name() }}</td>
                                 <td>{!! $reservation->time() !!}</td>
                                 <td>
                                     <a href="{{ route('reservations.show', $reservation->publicId()) }}"
@@ -89,9 +89,9 @@
                         </tr>
                         @forelse($tomorrowsReservations AS $reservation)
                             <tr>
-                                <td>{{ $reservation->customer()->name ?? '' }}</td>
-                                <td>{{ $reservation->customer()->phone_number ?? '' }}</td>
-                                <td>{{ $reservation->venue()->name() }}</td>
+                                <td>{{ $reservation->customer->name ?? '' }}</td>
+                                <td>{{ $reservation->customer->phone_number ?? '' }}</td>
+                                <td>{{ $reservation->venue->name() }}</td>
                                 <td>{!! $reservation->time() !!}</td>
                                 <td>
                                     <a href="{{ route('reservations.show', $reservation->publicId()) }}"

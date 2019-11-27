@@ -72,5 +72,6 @@ return [
     'created-at' => 'تاريخ الإنشاء',
     'venue-kind' => 'Venue Kind',
     'venues' => 'ملاعب',
-    'notes' => 'ملاحظات'
+    'notes' => 'ملاحظات',
+    'submit' => 'ارسل'
 ];

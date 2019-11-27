@@ -23,11 +23,11 @@
                 <span class="info-box-icon"><i class="fa fa-user"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">@lang('common.info')</span>
-                    @if(isset($reservation->customer()->name))
-                        <span class="info-box-number">{{ $reservation->customer()->name }}</span>
+                    @if(isset($reservation->customer->name))
+                        <span class="info-box-number">{{ $reservation->customer->name }}</span>
                     @endif
-                    @if(isset($reservation->customer()->address)))
-                        <span class="info-box-more">{{ $reservation->customer()->address }}</span>
+                    @if(isset($reservation->customer->address)))
+                        <span class="info-box-more">{{ $reservation->customer->address }}</span>
                     @else
                         <span class="info-box-more">Amman Jordan</span>
                     @endif
@@ -39,9 +39,9 @@
                 <span class="info-box-icon"><i class="fa fa-phone"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">@lang('common.contact')</span>
-                    <span class="info-box-number">{{ $reservation->customer()->phone_number }}</span>
-                    @if(isset($reservation->customer()->email))
-                        <span class="info-box-more">{{ $reservation->customer()->email }}</span>
+                    <span class="info-box-number">{{ $reservation->customer->phone_number }}</span>
+                    @if(isset($reservation->customer->email))
+                        <span class="info-box-more">{{ $reservation->customer->email }}</span>
                     @endif
                 </div>
             </div>

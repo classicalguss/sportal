@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Admin;
+use App\Customer;
 use App\Facility;
 use App\Hashes\ReservationIdHash;
 use App\Hashes\TypeIdHash;
@@ -13,6 +14,8 @@ use App\Helpers\CustomerHelper;
 use App\Helpers\ReservationHelper;
 use App\Helpers\SmsHelper;
 use App\Helpers\VenueAvailabilityHelper;
+use App\Http\Requests\Reservation\ReservationCalendarDeleteRequest;
+use App\Http\Requests\Reservation\ReservationCalendarDetailsUpdateRequest;
 use App\Http\Requests\Reservation\ReservationCreateRequest;
 use App\Http\Requests\Reservation\ReservationDestroyRequest;
 use App\Http\Requests\Reservation\ReservationListRequest;
@@ -24,6 +27,7 @@ use App\Reservation;
 use App\ReservationAvailability;
 use App\Role;
 use App\SmsLog;
+use App\Type;
 use App\Venue;
 use App\VenueAvailability;
 use Auth;
@@ -241,9 +245,10 @@ class ReservationController extends Controller
         }
 
         $page_title = __('app.calendar');
-        $reservations = Reservation::whereBetween('start_date_time', [Carbon::now(), Carbon::now()->addWeek(2)])
-            ->where('facility_id', '=', $facility_id)->get();
-        return view('reservation.calendar', compact('page_title', 'reservations', 'colorsKeyArray', 'venues', 'facilities', 'facility_id'));
+        $reservations = Reservation::whereBetween('start_date_time', [Carbon::now()->subWeek(2), Carbon::now()->addWeek(2)])
+            ->where('facility_id', '=', $facility_id)->with(['customer', 'venue.types'])->get();
+        $types = Type::all();
+        return view('reservation.calendar', compact('page_title', 'reservations', 'colorsKeyArray', 'venues', 'facilities', 'facility_id', 'types'));
     }
 
     /**
@@ -275,6 +280,30 @@ class ReservationController extends Controller
         return view('reservation.create', compact('ids', 'vid', 'venue_availability', 'images', 'venue_types', 'venue', 'page_title'));
     }
 
+    public function calendarDelete(ReservationCalendarDeleteRequest $request) {
+        $reservedAvailabilities = ReservationAvailability::where('reserve_id', request('reservation_id'));
+        $venueAvailabilyIds = $reservedAvailabilities->pluck('available_id')->all();
+
+        VenueAvailability::whereIn('id', $venueAvailabilyIds)->delete();
+        $reservedAvailabilities->delete();
+        Reservation::findOrFail($request->input('reservation_id'))->delete();
+    }
+
+    public function calendarDetailsUpdate(ReservationCalendarDetailsUpdateRequest $request) {
+
+        //Create new reservation
+        $reservation = Reservation::findOrFail($request->input('reservation_id'));
+        if ($request->input('phone_number')) {
+            $customer = CustomerHelper::getOrCreateCustomer('962' . $request->input('phone_number'), [
+                'name' => $request->input('name')
+            ]);
+            $reservation->customer_id = $customer->id;
+        }
+        $reservation->price = $request->price;
+        $reservation->type_id = $request->type;
+        $reservation->save();
+    }
+
     public function calendarUpdate(ReservationCalendarUpdateRequest $request) {
         $reservation = Reservation::findOrFail($request->input('reservation_id'));
         $time_start = $request->input('time_start');
@@ -294,7 +323,8 @@ class ReservationController extends Controller
             VenueAvailability::whereIn('id', $reservedAvailabilities)->update([
                 'time_start' => $start_date_time->format('H:i'),
                 'time_finish' => $finish_date_time->format('H:i'),
-                'duration' => $duration
+                'duration' => $duration,
+                'date' => $start_date_time->format('Y-m-d')
             ]);
         }
 
@@ -329,7 +359,7 @@ class ReservationController extends Controller
             'finish' => $finish_date_time->format('H:i'),
             'duration' => $duration
         ];
-        $date = $start_date_time->toDate();
+        $date = $start_date_time->format('Y-m-d');
         foreach ($childVenues as $childVenue) {
             $venue_availabilities[] = VenueAvailabilityHelper::createAvailability($childVenue, $date, $time);
         }
@@ -514,7 +544,7 @@ class ReservationController extends Controller
             return redirect()->back()->with('message', __('availability.not-found'));
         }
         $venue_availability = $venue_availabilities[0];
-        $venue = $reservation->venue();
+        $venue = $reservation->venue;
 
         return view('reservation.show', compact('venue_availability', 'venue', 'reservation', 'page_title'));
     }
@@ -565,7 +595,7 @@ class ReservationController extends Controller
             $message = ReservationHelper::reservationSms($reservation, $admin->name, 'canceled');
 
             if ($admin->hasRole(Role::ROLE_FACILITY_MANAGER)) {
-                $customer = $reservation->customer();
+                $customer = $reservation->customer;
                 $response = SmsHelper::sendSms($customer->phone_number, 'Your ' . $message, SmsLog::SMSTYPE_CANCEL_RESERVATION);
             }
 

@@ -86,7 +86,7 @@ class ReservationHelper
     public static function reservationSms($reservation, $name, $type = 'canceled')
     {
         $message = "reservation on ";
-        $message .= $reservation->date() . " at " . $reservation->time_only() . ' in ' . $reservation->facility()->name('en') . ' (' . $reservation->venue()->name('en') . ')';
+        $message .= $reservation->date() . " at " . $reservation->time_only() . ' in ' . $reservation->facility()->name('en') . ' (' . $reservation->venue->name('en') . ')';
         $message .= " has been " . $type . " by ". $name;
 
         return $message;

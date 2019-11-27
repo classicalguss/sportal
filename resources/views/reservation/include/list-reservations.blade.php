@@ -16,10 +16,10 @@
         </tr>
         @forelse($reservations AS $reservation)
             <tr>
-                <td>{{ $reservation->customer()->name ?? '' }}</td>
-                <td>{{ $reservation->customer()->phone_number ?? '' }}</td>
+                <td>{{ $reservation->customer->name ?? '' }}</td>
+                <td>{{ $reservation->customer->phone_number ?? '' }}</td>
                 <td>{{ $reservation->facility()->name() }}</td>
-                <td>{{ $reservation->venue()->name() }}</td>
+                <td>{{ $reservation->venue->name() }}</td>
                 <td>{!! $reservation->date() !!}</td>
                 <td>{!! $reservation->time() !!}</td>
                 <td>
