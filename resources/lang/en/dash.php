@@ -10,5 +10,7 @@ return [
     'chart-venues' => 'Venues Reservations',
     'number-of-reservations' => 'Number of Reservations',
     'reservations-for-today' => 'Reservations for today',
-    'reservations-for-tomorrow' => 'Reservations for tomorrow'
+    'reservations-for-tomorrow' => 'Reservations for tomorrow',
+    'peak-hours' => 'Peak Hours',
+    'monthly-revenue' => 'Monthly Revenue'
 ];

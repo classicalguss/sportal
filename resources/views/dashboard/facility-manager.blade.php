@@ -41,6 +41,44 @@
     </div>
     <div class="row">
         <div class="col-md-6">
+            <div class="box box-danger">
+                <div class="box-header with-border">
+                    <h3 class="box-title">@lang('dash.monthly-revenue')</h3>
+
+                    <div class="box-tools pull-right">
+                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i
+                                    class="fa fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <canvas id="barChart" style="height: 393px; width: 787px;" height="393" width="787"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="box box-danger">
+                <div class="box-header with-border">
+                    <h3 class="box-title">@lang('dash.peak-hours')</h3>
+
+                    <div class="box-tools pull-right">
+                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i
+                                    class="fa fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <canvas id="linePeakHoursChart" style="height: 393px; width: 787px;" height="393" width="787"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
             <div class="box">
                 <div class="box-header">@lang('dash.reservations-for-today')</div>
                 <div class="box-body table-responsive no-padding">
@@ -149,11 +187,9 @@
                 }
             }
         });
+
         var timeline = document.getElementById('lineChart').getContext('2d');
         var reservationsTimeLineData = @json($daysReservationsCount);
-        var dateFormat = 'MMMM DD YYYY';
-        var date = moment('April 01 2017', dateFormat);
-        var date2 = moment('April 02 2017', dateFormat);
         var reservationsTimeLine = [];
         for (var i in reservationsTimeLineData) {
             reservationsTimeLine.push({
@@ -185,5 +221,51 @@
                 },
             }
         });
+        var barGraph = document.getElementById('barChart').getContext('2d')
+        var monthlyReservationRevenuesData = @json($monthlyReservationRevenues);
+        console.log(monthlyReservationRevenuesData);
+        labels = [];
+        data = [];
+        for (var i in monthlyReservationRevenuesData) {
+           labels.push(i);
+           data.push(monthlyReservationRevenuesData[i]);
+        }
+        console.log(monthlyReservationRevenuesData);
+        var chart = new Chart(barGraph, {
+            type: 'bar',
+            data: {
+                labels : labels,
+                datasets: [{
+                    data: data,
+                    label: '@lang('dash.monthly-revenue')',
+                    backgroundColor: 'green',
+                    borderColor: 'green',
+                }]
+            },
+        });
+        var linePeakHoursChart = document.getElementById('linePeakHoursChart').getContext('2d')
+        labels = [];
+        data = [];
+        @foreach ($reservationByHour as $key => $hour)
+           labels.push("{{ $key }}") ;
+           data.push("{{ $hour }}");
+        @endforeach
+        console.log(labels);
+        var chart = new Chart(linePeakHoursChart, {
+            type: 'line',
+            data: {
+                labels : labels,
+                datasets: [{
+                    data: data,
+                    label: '@lang('dash.peak-hours')',
+                    backgroundColor: 'purple',
+                    borderColor: 'purple',
+                    lineTension: 0.5
+                }]
+            },
+        });
+
+
+
     </script>
 @endsection

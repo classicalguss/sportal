@@ -10,5 +10,7 @@ return [
     'chart-venues' => 'حجوزات الملاعب',
     'number-of-reservations' => 'عدد الحجوزات',
     'reservations-for-today' => 'حجوزات اليوم',
-    'reservations-for-tomorrow' => 'حجوزات الغد'
+    'reservations-for-tomorrow' => 'حجوزات الغد',
+    'monthly-revenue' => 'الدخل الشهري',
+    'peak-hours' => 'ساعات الذروة'
 ];
