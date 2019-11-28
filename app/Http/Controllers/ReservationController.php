@@ -299,8 +299,12 @@ class ReservationController extends Controller
             ]);
             $reservation->customer_id = $customer->id;
         }
-        $reservation->price = $request->price;
-        $reservation->type_id = $request->type;
+        if (request('price')) {
+            $reservation->price = $request->price;
+        }
+        if (request('type')) {
+            $reservation->type_id = $request->type;
+        }
         $reservation->save();
     }
 
