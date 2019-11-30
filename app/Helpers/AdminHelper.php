@@ -27,7 +27,7 @@ class AdminHelper
 
     public static function sendSmsToSuperAdmins($message, $sms_type)
     {
-        $superAdmins = Admin::role(Role::ROLE_FACILITY_MANAGER)->get();
+        $superAdmins = Admin::role(Role::ROLE_SUPER_ADMIN)->get();
         foreach ($superAdmins as $admin) {
             SmsHelper::sendSms($admin->phone_number, $message, $sms_type);
         }
