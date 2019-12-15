@@ -11,6 +11,6 @@ return [
     'number-of-reservations' => 'عدد الحجوزات',
     'reservations-for-today' => 'حجوزات اليوم',
     'reservations-for-tomorrow' => 'حجوزات الغد',
-    'monthly-revenue' => 'الدخل الشهري',
+    'monthly-revenue' => ' الدخل الشهري (آخر 10 شهور)',
     'peak-hours' => 'ساعات الذروة'
 ];

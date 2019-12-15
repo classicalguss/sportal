@@ -60,7 +60,7 @@ use Carbon\CarbonInterval;
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="phone_number">@lang('common.phone-number') *</label>
+                                <label for="phone_number">@lang('common.phone-number')</label>
                                 <div class="input-group date">
                                     @if(app()->isLocale('en'))<div class="input-group-addon">962</div>@endif
                                     <input style="direction: ltr" type="text" class="form-control" id="update-reservation-phone" name="phone_number" value="" placeholder="ex: 791234567">
@@ -70,7 +70,7 @@ use Carbon\CarbonInterval;
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">@lang('common.name') *</label>
+                                <label for="name">@lang('common.name')</label>
                                 <input type="text" class="form-control" id="update-reservation-name" name="name" value="" placeholder="@lang('common.name')">
                             </div>
                         </div>
@@ -198,17 +198,25 @@ use Carbon\CarbonInterval;
             $('#calendar').fullCalendar({
                 defaultDate: moment().format('YYYY-MM-DD'),
                 defaultView: 'agendaWeek',
+                columnFormat: 'ddd DD/MM',
+                slotDuration: {'minutes' : 30},
+                slotLabelInterval: "01:30",
+                slowMinutes: 30,
                 plugins: [ 'dayGrid' ],
                 editable: true,
                 timeFormat: 'HH:mm',
                 eventLimit: true, // allow "more" link when too many events
                 dragRevertDuration: 100,
                 minTime: '08:00:00',
+                timeFormat: 'h:mm A',
                 header: {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'agendaWeek,agendaDay'
                 },
+                slotLabelFormat: [
+                    'ddd'        // lower level of text
+                ],
                 buttonText: {
                     today: 'today',
                     week: 'week',

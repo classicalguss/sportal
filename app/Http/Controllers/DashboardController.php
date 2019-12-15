@@ -86,7 +86,8 @@ class DashboardController extends Controller
                 ->get();
             $monthlyReservationRevenues = Reservation::selectRaw('date_format(start_date_time, "%M") as month')
                 ->selectRaw('sum(price) as sum')
-                ->whereYear('start_date_time', Carbon::now()->format('Y'))
+                ->whereBetween('start_date_time', [Carbon::now()->subMonth(10), Carbon::now()])
+//                ->whereYear('start_date_time', Carbon::now()->format('Y'))
 //                ->whereIn('facility_id', $facility_ids)
                 ->groupBy('month')
                 ->orderBy('month', 'desc')

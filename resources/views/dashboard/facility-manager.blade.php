@@ -213,10 +213,12 @@
                 scales: {
                     xAxes: [{
                         type: 'time',
-                        distribution: 'series',
-                        ticks: {
-                            source: 'auto',
-                        }
+                        time: {
+                            stepSize: '2',
+                            displayFormats: {
+                                day: 'DD/MM'
+                            }
+                        },
                     }],
                 },
             }
@@ -246,11 +248,12 @@
         var linePeakHoursChart = document.getElementById('linePeakHoursChart').getContext('2d')
         labels = [];
         data = [];
+        i = 0;
         @foreach ($reservationByHour as $key => $hour)
-           labels.push("{{ $key }}") ;
-           data.push("{{ $hour }}");
+            labels.push("{{ $key }}");
+            data.push("{{ $hour }}");
+            i++;
         @endforeach
-        console.log(labels);
         var chart = new Chart(linePeakHoursChart, {
             type: 'line',
             data: {

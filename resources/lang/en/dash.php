@@ -12,5 +12,5 @@ return [
     'reservations-for-today' => 'Reservations for today',
     'reservations-for-tomorrow' => 'Reservations for tomorrow',
     'peak-hours' => 'Peak Hours',
-    'monthly-revenue' => 'Monthly Revenue'
+    'monthly-revenue' => 'Monthly Revenue (Last 10 months)'
 ];
