@@ -103,7 +103,10 @@ class ValidTimeRange implements Rule
                 }
 
                 $durationArray = explode(":", request('duration'));
-                $durationMinutes = CarbonInterval::hours($durationArray[0])->minutes($durationArray[1])->totalMinutes;
+                $now = Carbon::now();
+                $addedMinutes = clone $now;
+                $addedMinutes->addHours($durationArray[0])->addMinutes($durationArray[1]);
+                $durationMinutes = $now->diffInMinutes($addedMinutes);
                 if (!in_array($durationMinutes, $available_times['interval']['times'])) {
                     $this->message = "You can't reserve this venue for " . $durationMinutes . " minutes. The available " .
                         "minutes are " . implode(' and ', $available_times['interval']['times']);

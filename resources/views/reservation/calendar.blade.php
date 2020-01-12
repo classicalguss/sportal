@@ -9,6 +9,8 @@ use Carbon\CarbonInterval;
 @section('content')
     @include('common.show-message')
 
+    <div id="overlay"></div>
+    <div class="loader"></div>
     <div class="row">
         <div class="col-sm-2">
             <select style="margin-bottom: 10px" onchange="changeFacility(this.value)">
@@ -105,6 +107,39 @@ use Carbon\CarbonInterval;
     <link rel="stylesheet" href="{{ asset('css/fullcalendar.min.css') }} ">
     <link rel="stylesheet" href="{{ asset('css/fullcalendar.print.css') }} " media="print">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <style>
+        #overlay {
+            position: fixed; /* Sit on top of the page content */
+            width: 100%; /* Full width (cover the whole page) */
+            height: 100%; /* Full height (cover the whole page) */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+            z-index: 9999; /* Specify a stack order in case you're using a different order for other elements */
+            cursor: pointer; /* Add a pointer on hover */
+            display: none;
+        }
+    .loader {
+        display: none;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 999;
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+    }
+    </style>
 @endpush
 
 @push('scripts')
@@ -277,6 +312,8 @@ use Carbon\CarbonInterval;
                         "reservation_type": 1,
                         "price": price,
                     }
+                    $('#overlay').show();
+                    $('.loader').show();
                     $.ajax('/reservationsCalendarStore',{
                         'headers': {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -287,9 +324,13 @@ use Carbon\CarbonInterval;
                     .fail(function(response) {
                         alert(response.responseJSON.message)
                         $('#calendar').fullCalendar('removeEvents', event._id);
+                        $('#overlay').hide();
+                        $('.loader').hide();
                     })
                     .success(function(response) {
                         event.reservation_id = response.reservation_id;
+                        $('#overlay').hide();
+                        $('.loader').hide();
                     })
                 },
                 eventOverlap: function(stillEvent, movingEvent) {

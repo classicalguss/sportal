@@ -98,7 +98,12 @@ class Venue extends Model
     public function shortestDuration()
     {
         if ($this->interval_times != null) {
-            return json_decode($this->interval_times, true)['minutes'][0];
+            $minutes = json_decode($this->interval_times, true)['minutes'];
+            if (isset($minutes[0])) {
+                return $minutes[0];
+            } else {
+                return 30;
+            }
         }
         return 30;
     }
