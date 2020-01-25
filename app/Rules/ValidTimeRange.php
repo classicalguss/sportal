@@ -143,12 +143,9 @@ class ValidTimeRange implements Rule
                     ])->orWhereRaw('? BETWEEN time_start AND time_finish', $startAt->format('H:i') . ':01');
                 });
 
-            Log::debug(request('reservation_id'));
             if (request('reservation_id') != null) {
-                Log::debug('got here man');
                 $reservedAvailabilities = ReservationAvailability::where('reserve_id', request('reservation_id'))
                     ->pluck('available_id')->all();
-                Log::debug($reservedAvailabilities);
                 $availabilityOverlapQuery->whereNotIn('id', $reservedAvailabilities);
             }
 

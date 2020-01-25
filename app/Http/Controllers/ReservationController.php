@@ -280,7 +280,8 @@ class ReservationController extends Controller
         return view('reservation.create', compact('ids', 'vid', 'venue_availability', 'images', 'venue_types', 'venue', 'page_title'));
     }
 
-    public function calendarDelete(ReservationCalendarDeleteRequest $request) {
+    public function calendarDelete(ReservationCalendarDeleteRequest $request)
+    {
         $reservedAvailabilities = ReservationAvailability::where('reserve_id', request('reservation_id'));
         $venueAvailabilyIds = $reservedAvailabilities->pluck('available_id')->all();
 
@@ -289,7 +290,8 @@ class ReservationController extends Controller
         Reservation::findOrFail($request->input('reservation_id'))->delete();
     }
 
-    public function calendarDetailsUpdate(ReservationCalendarDetailsUpdateRequest $request) {
+    public function calendarDetailsUpdate(ReservationCalendarDetailsUpdateRequest $request)
+    {
 
         //Create new reservation
         $reservation = Reservation::findOrFail($request->input('reservation_id'));
@@ -308,7 +310,8 @@ class ReservationController extends Controller
         $reservation->save();
     }
 
-    public function calendarUpdate(ReservationCalendarUpdateRequest $request) {
+    public function calendarUpdate(ReservationCalendarUpdateRequest $request)
+    {
         $reservation = Reservation::findOrFail($request->input('reservation_id'));
         $time_start = $request->input('time_start');
         $time_finish = $request->input('time_finish');
@@ -323,19 +326,51 @@ class ReservationController extends Controller
 
             $reservedAvailabilities = ReservationAvailability::where('reserve_id', request('reservation_id'))
                 ->pluck('available_id')->all();
+            //Get Overlapping Availabilities
 
-            VenueAvailability::whereIn('id', $reservedAvailabilities)->update([
-                'time_start' => $start_date_time->format('H:i'),
-                'time_finish' => $finish_date_time->format('H:i'),
-                'duration' => $duration,
-                'date' => $start_date_time->format('Y-m-d')
-            ]);
+            $venue_availabilities = VenueAvailability::whereIn('id', $reservedAvailabilities)->get();
+            foreach ($venue_availabilities as $venue_availability) {
+                //overlapping venue availabilities
+                $formattedDate = Carbon::createFromFormat('d-m-Y', $venue_availability->date)->format('Y-m-d');
+                //Make old overlaps available
+                VenueAvailability::where('id', '!=', $venue_availability->id)
+                    ->where('status', 1)
+                    ->where('venue_id', $venue_availability->venue_id)
+                    ->where('date', $formattedDate)
+                    ->whereBetween('time_start', [$venue_availability->time_start, $venue_availability->time_finish])
+                    ->where('time_start', '<', $venue_availability->time_finish)->update([
+                        'status' => 0
+                    ]);
+
+                //Update new overlaps
+                $formattedTimeStart = $start_date_time->format('H:i');
+                $formattedTimeFinish = $finish_date_time->format('H:i');
+                VenueAvailability::where('id', '!=', $venue_availability->id)
+                    ->where('status', 0)
+                    ->where('venue_id', $venue_availability->venue_id)
+                    ->where('date', $formattedDate)
+                    ->whereBetween('time_start', [$formattedTimeStart, $formattedTimeFinish])
+                    ->where('time_start', '<', $formattedTimeFinish)->update([
+                        'status' => 1
+                    ]);
+
+                VenueAvailability::where('id', $venue_availability->id)->update([
+                    'time_start' => $start_date_time->format('H:i'),
+                    'time_finish' => $finish_date_time->format('H:i'),
+                    'duration' => $duration,
+                    'date' => $start_date_time->format('Y-m-d')
+                ]);
+            }
+
+            //Delete other overlapping availabilities
+
         }
 
         return 'ok';
     }
 
-    public function calendarStore(ReservationCalendarStoreRequest $request) {
+    public function calendarStore(ReservationCalendarStoreRequest $request)
+    {
         $time_start = $request->input('time_start');
         $time_finish = $request->input('time_finish');
         $type_id = TypeIdHash::private($request->input('type'));
@@ -351,8 +386,7 @@ class ReservationController extends Controller
                 $childVenueIds[] = $childVenue->child_id;
             }
             $childVenues = Venue::whereIn('id', $childVenueIds)->get();
-        }
-        else {
+        } else {
             $childVenues = [$venue];
         }
 
@@ -371,7 +405,8 @@ class ReservationController extends Controller
         return response()->json(['message' => 'done', 'reservation_id' => $reservation->id], \Illuminate\Http\Response::HTTP_OK);
     }
 
-    private function reserve($request, $type_id, $venue_availabilities, $start_date_time, $finish_date_time) {
+    private function reserve($request, $type_id, $venue_availabilities, $start_date_time, $finish_date_time)
+    {
         $vid = $request->input('vid');
         $duration = $request->input('duration');
         $venue_id = VenueIdHash::private($vid);
@@ -410,7 +445,7 @@ class ReservationController extends Controller
             'price' => $price
         ]);
 
-        if($reservation->wasRecentlyCreated) {
+        if ($reservation->wasRecentlyCreated) {
             foreach ($venue_availabilities AS $venue_availability) {
                 ReservationAvailability::create([
                     'reserve_id' => $reservation->id,
@@ -468,12 +503,12 @@ class ReservationController extends Controller
         $admin = Admin::find($admin_id);
 
         $reserver = Reservation::RESERVERTYPE_FACILITY_MANGER;
-        if($admin->hasRole('super_admin')){
+        if ($admin->hasRole('super_admin')) {
             $reserver = Reservation::RESERVERTYPE_SUPER_ADMIN;
         }
 
         //Create new reservation
-        $customer = CustomerHelper::getOrCreateCustomer('962'.$request->input('phone_number'), [
+        $customer = CustomerHelper::getOrCreateCustomer('962' . $request->input('phone_number'), [
             'name' => $request->input('name'),
             'email' => $request->input('email'),
             'address' => $request->input('address')
@@ -532,7 +567,7 @@ class ReservationController extends Controller
      * Display the specified resource.
      *
      * @param ReservationShowRequest $request
-     * @param  int $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function show(ReservationShowRequest $request, $id)
@@ -556,7 +591,7 @@ class ReservationController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
@@ -567,8 +602,8 @@ class ReservationController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  int $id
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
@@ -580,7 +615,7 @@ class ReservationController extends Controller
      * Remove the specified resource from storage.
      *
      * @param ReservationDestroyRequest $request
-     * @param  int $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function destroy(ReservationDestroyRequest $request, $id)
